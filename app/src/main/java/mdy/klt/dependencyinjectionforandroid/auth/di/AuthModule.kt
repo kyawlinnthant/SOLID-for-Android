@@ -20,9 +20,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import mdy.klt.dependencyinjectionforandroid.auth.domain.repository.AuthDsRepository
 import mdy.klt.dependencyinjectionforandroid.auth.data.remote.AuthApiService
+import mdy.klt.dependencyinjectionforandroid.auth.data.repository.AuthApiRepositoryImpl
 import mdy.klt.dependencyinjectionforandroid.auth.data.repository.AuthDsRepositoryImpl
+import mdy.klt.dependencyinjectionforandroid.auth.domain.repository.AuthApiRepository
+import mdy.klt.dependencyinjectionforandroid.auth.domain.repository.AuthDsRepository
 import mdy.klt.dependencyinjectionforandroid.core.common.Constants
 import mdy.klt.dependencyinjectionforandroid.core.common.Endpoints
 import mdy.klt.dependencyinjectionforandroid.core.di.Qualifier
@@ -45,6 +47,7 @@ object AuthModule {
             .readTimeout(timeout = 60, unit = TimeUnit.SECONDS)
             .build()
     }
+
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
@@ -63,6 +66,18 @@ object AuthModule {
     @Singleton
     fun providesAuthApiService(retrofit: Retrofit): AuthApiService {
         return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providesAuthApiRepository(
+        api: AuthApiService,
+        @Qualifier.Io io: CoroutineDispatcher
+    ): AuthApiRepository {
+        return AuthApiRepositoryImpl(
+            api = api,
+            io = io
+        )
     }
 
     @Provides
@@ -91,7 +106,7 @@ object AuthModule {
     fun providesAuthDsRepository(
         ds: DataStore<Preferences>,
         @Qualifier.Io io: CoroutineDispatcher
-    ) : AuthDsRepository {
+    ): AuthDsRepository {
         return AuthDsRepositoryImpl(
             ds = ds,
             io = io
